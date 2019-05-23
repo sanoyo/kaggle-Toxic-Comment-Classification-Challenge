@@ -92,3 +92,13 @@ ra_val = RocAucEvaluation(validation_data=(X_val, y_val), interval=1)
 callbacks_list = [ra_val,checkpoint, early]
 
 model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val), callbacks=callbacks_list, verbose=1)
+
+# 評価
+best_model = "model/weights.04-0.05.hdf5"
+model.load_weights(best_model)
+y_pred = model.predict(X_test, batch_size=128, verbose=1)
+
+submission = pd.read_csv('../csv/sample_submission.csv')
+submission[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]] = y_pred
+submission.to_csv('submit_csv/submission_cnn_lstn.csv', index=False)
+
