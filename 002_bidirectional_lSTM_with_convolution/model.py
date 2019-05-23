@@ -3,7 +3,6 @@
 https://www.kaggle.com/eashish/bidirectional-gru-with-convolution
 """
 
-
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 
@@ -97,13 +96,11 @@ ra_val = RocAucEvaluation(validation_data=(X_val, y_val), interval = 1)
 callbacks_list = [ra_val,checkpoint, early]
 
 # 学習
-#model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val),callbacks = callbacks_list,verbose=1)
-
+model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val),callbacks = callbacks_list,verbose=1)
 
 # 評価
 model.load_weights(file_path)
 y_pred = model.predict(x_test, batch_size=128, verbose=1)
-
 
 submission = pd.read_csv('../csv/sample_submission.csv')
 submission[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]] = y_pred
