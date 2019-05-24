@@ -4,32 +4,28 @@ https://www.kaggle.com/yekenot/textcnn-2d-convolution
 """
 
 import numpy as np
-
-np.random.seed(42)
 import pandas as pd
-
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
-
 from keras.models import Model
 from keras.layers import Input, Embedding, Dense, Conv2D, MaxPool2D
 from keras.layers import Reshape, Flatten, Concatenate, Dropout, SpatialDropout1D
 from keras.preprocessing import text, sequence
-from keras.callbacks import Callback
-
-import warnings
-
-warnings.filterwarnings('ignore')
+from keras.callbacks import Callback, ModelCheckpoint
 
 import os
+import warnings
+import pdb
 
+np.random.seed(42)
+warnings.filterwarnings('ignore')
 os.environ['OMP_NUM_THREADS'] = '4'
 
-EMBEDDING_FILE = '../input/fasttext-crawl-300d-2m/crawl-300d-2M.vec'
+EMBEDDING_FILE = 'fasttext/crawl-300d-2M.vec'
 
-train = pd.read_csv('../input/jigsaw-toxic-comment-classification-challenge/train.csv')
-test = pd.read_csv('../input/jigsaw-toxic-comment-classification-challenge/test.csv')
-submission = pd.read_csv('../input/jigsaw-toxic-comment-classification-challenge/sample_submission.csv')
+train = pd.read_csv('../csv/train.csv')
+test = pd.read_csv('../csv/test.csv')
+submission = pd.read_csv('../csv/sample_submission.csv')
 
 X_train = train["comment_text"].fillna("fillna").values
 y_train = train[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]].values
@@ -51,10 +47,10 @@ def get_coefs(word, *arr): return word, np.asarray(arr, dtype='float32')
 
 
 embeddings_index = dict(get_coefs(*o.rstrip().rsplit(' ')) for o in open(EMBEDDING_FILE))
-
 word_index = tokenizer.word_index
 nb_words = min(max_features, len(word_index))
 embedding_matrix = np.zeros((nb_words, embed_size))
+
 for word, i in word_index.items():
     if i >= max_features: continue
     embedding_vector = embeddings_index.get(word)
@@ -115,15 +111,18 @@ def get_model():
 
 model = get_model()
 
-batch_size = 256
+batch_size = 128
 epochs = 3
 
 X_tra, X_val, y_tra, y_val = train_test_split(x_train, y_train, train_size=0.95, random_state=233)
 RocAuc = RocAucEvaluation(validation_data=(X_val, y_val), interval=1)
 
-hist = model.fit(X_tra, y_tra, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val),
-                 callbacks=[RocAuc], verbose=2)
+file_path="model/weights.{epoch:02d}-{val_loss:.2f}.hdf5"
+checkpoint = ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='max')
 
-y_pred = model.predict(x_test, batch_size=1024)
+hist = model.fit(X_tra, y_tra, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val),
+                 callbacks=[RocAuc, checkpoint], verbose=2)
+
+y_pred = model.predict(x_test, batch_size=128)
 submission[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]] = y_pred
-submission.to_csv('submission.csv', index=False)
+submission.to_csv('submit_csv/submission.csv', index=False)
