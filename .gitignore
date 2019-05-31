@@ -12,3 +12,11 @@ text
 003_text_cnn/model
 003_text_cnn/submit_csv
 003_text_cnn/fasttext/
+
+004_Toxic_Comments_EDA/image/
+
+005_Bert/apex/
+005_Bert/jawiki-latest-pages-articles.xml.bz2
+005_Bert/memo.txt
+005_Bert/pretrained-weights/
+005_Bert/wget-log
